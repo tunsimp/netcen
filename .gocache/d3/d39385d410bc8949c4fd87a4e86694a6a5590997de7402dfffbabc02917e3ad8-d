@@ -1,0 +1,4 @@
+./auth_handler.go
+./manga_handler.go
+./notification_handler.go
+./progress_handler.go

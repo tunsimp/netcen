@@ -57,4 +57,3 @@ WHERE username = ?;`
 
 	return user, nil
 }
-

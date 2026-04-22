@@ -1,0 +1,3 @@
+./manga_repository.go
+./progress_repository.go
+./user_repository.go
