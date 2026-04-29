@@ -22,10 +22,7 @@ type authRequest struct {
 }
 
 func NewAuthHandler(users *repository.UserRepository, jwt *auth.Manager) *AuthHandler {
-	return &AuthHandler{
-		users: users,
-		jwt:   jwt,
-	}
+	return &AuthHandler{users: users, jwt: jwt}
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {

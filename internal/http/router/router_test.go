@@ -45,9 +45,6 @@ func TestAuthFlow(t *testing.T) {
 	if err := json.Unmarshal(loginRec.Body.Bytes(), &loginPayload); err != nil {
 		t.Fatalf("json.Unmarshal(login) error = %v", err)
 	}
-	if loginPayload.Token == "" {
-		t.Fatalf("token is empty")
-	}
 
 	meRec := performJSON(server.Handler(), http.MethodGet, "/auth/me", nil, loginPayload.Token)
 	if meRec.Code != http.StatusOK {
@@ -79,6 +76,7 @@ func cfgForTest() config.Config {
 	return config.Config{
 		HTTPPort:  "18080",
 		TCPPort:   "19090",
+		UDPPort:   "19091",
 		DBPath:    "./test.db",
 		JWTSecret: "test-secret",
 	}

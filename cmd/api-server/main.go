@@ -14,7 +14,9 @@ import (
 	"mangahub/internal/http/middleware"
 	httprouter "mangahub/internal/http/router"
 	"mangahub/internal/repository"
+	"mangahub/internal/services"
 	"mangahub/internal/tcp"
+	"mangahub/internal/udp"
 )
 
 func main() {
@@ -27,8 +29,12 @@ func main() {
 	defer db.Close()
 
 	userRepo := repository.NewUserRepository(db)
+	mangaRepo := repository.NewMangaRepository(db)
+	progressRepo := repository.NewProgressRepository(db)
 
 	jwtManager := auth.NewManager(cfg.JWTSecret)
+	progressService := services.NewProgressService(mangaRepo, progressRepo)
+	notificationService := services.NewNotificationService(mangaRepo)
 
 	authHandler := handlers.NewAuthHandler(userRepo, jwtManager)
 
@@ -37,17 +43,21 @@ func main() {
 		authHandler,
 		middleware.RequireAuth(jwtManager),
 	)
-	tcpServer := tcp.NewServer(cfg)
+	tcpServer := tcp.NewServer(cfg, progressService)
+	udpServer := udp.NewServer(cfg, notificationService)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	errCh := make(chan error, 2)
+	errCh := make(chan error, 3)
 	go func() {
 		errCh <- httpServer.Start()
 	}()
 	go func() {
 		errCh <- tcpServer.Start(ctx)
+	}()
+	go func() {
+		errCh <- udpServer.Start(ctx)
 	}()
 
 	select {

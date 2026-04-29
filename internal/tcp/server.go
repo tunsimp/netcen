@@ -11,19 +11,20 @@ import (
 	"net"
 	"strings"
 	"sync"
-	"time"
 
 	"mangahub/internal/config"
+	"mangahub/internal/models"
+	"mangahub/internal/services"
 )
 
 type Server struct {
-	cfg config.Config
+	cfg      config.Config
+	progress *services.ProgressService
 
 	listener net.Listener
 
 	mu      sync.RWMutex
 	clients map[string]net.Conn
-	updates chan ProgressUpdate
 }
 
 type ClientMessage struct {
@@ -36,20 +37,11 @@ type ClientMessage struct {
 	Timestamp int64  `json:"timestamp,omitempty"`
 }
 
-type ProgressUpdate struct {
-	Type      string `json:"type"`
-	UserID    string `json:"user_id"`
-	MangaID   string `json:"manga_id"`
-	Chapter   int    `json:"chapter"`
-	Status    string `json:"status"`
-	Timestamp int64  `json:"timestamp"`
-}
-
-func NewServer(cfg config.Config) *Server {
+func NewServer(cfg config.Config, progress *services.ProgressService) *Server {
 	return &Server{
-		cfg:     cfg,
-		clients: make(map[string]net.Conn),
-		updates: make(chan ProgressUpdate, 32),
+		cfg:      cfg,
+		progress: progress,
+		clients:  make(map[string]net.Conn),
 	}
 }
 
@@ -62,14 +54,16 @@ func (s *Server) Start(ctx context.Context) error {
 
 	log.Printf("tcp server listening on :%s", s.cfg.TCPPort)
 
+	progressCh, unsubscribe := s.progress.Subscribe(32)
+	defer unsubscribe()
+
 	go func() {
 		<-ctx.Done()
 		_ = s.listener.Close()
 		s.closeAllClients()
-		close(s.updates)
 	}()
 
-	go s.broadcastLoop()
+	go s.broadcastLoop(progressCh)
 
 	for {
 		conn, err := listener.Accept()
@@ -119,27 +113,15 @@ func (s *Server) handleConnection(conn net.Conn) {
 		case "hello":
 			s.writeJSON(conn, map[string]any{"type": "hello", "status": "connected"})
 		case "progress_update":
-			if msg.UserID == "" || msg.MangaID == "" || msg.Chapter < 1 || strings.TrimSpace(msg.Status) == "" {
+			if strings.TrimSpace(msg.UserID) == "" || strings.TrimSpace(msg.MangaID) == "" || msg.Chapter < 1 || strings.TrimSpace(msg.Status) == "" {
 				s.writeJSON(conn, map[string]any{"type": "error", "error": "invalid progress_update payload"})
 				continue
 			}
 
-			update := ProgressUpdate{
-				Type:      "progress_broadcast",
-				UserID:    msg.UserID,
-				MangaID:   msg.MangaID,
-				Chapter:   msg.Chapter,
-				Status:    msg.Status,
-				Timestamp: msg.Timestamp,
-			}
-			if update.Timestamp == 0 {
-				update.Timestamp = time.Now().Unix()
-			}
-
-			select {
-			case s.updates <- update:
-			default:
-				log.Printf("tcp broadcast queue full, dropping update from %s", conn.RemoteAddr().String())
+			if _, err := s.progress.Upsert(msg.UserID, msg.MangaID, msg.Chapter, msg.Status, msg.Timestamp); err != nil {
+				log.Printf("tcp progress update rejected from %s: %v", conn.RemoteAddr().String(), err)
+				s.writeJSON(conn, map[string]any{"type": "error", "error": err.Error()})
+				continue
 			}
 
 			s.writeJSON(conn, map[string]any{"type": "ack", "status": "ok"})
@@ -153,13 +135,13 @@ func (s *Server) handleConnection(conn net.Conn) {
 	}
 }
 
-func (s *Server) broadcastLoop() {
-	for update := range s.updates {
+func (s *Server) broadcastLoop(progressCh <-chan models.ProgressUpdate) {
+	for update := range progressCh {
 		s.broadcast(update)
 	}
 }
 
-func (s *Server) broadcast(update ProgressUpdate) {
+func (s *Server) broadcast(update models.ProgressUpdate) {
 	payload, err := json.Marshal(update)
 	if err != nil {
 		log.Printf("tcp broadcast marshal error: %v", err)
