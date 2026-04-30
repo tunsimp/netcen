@@ -1,30 +1,31 @@
 package router
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
-	"mangahub/internal/auth"
 	"mangahub/internal/config"
 	"mangahub/internal/http/handlers"
-	"mangahub/internal/http/middleware"
-	"mangahub/internal/repository"
 )
 
 type Server struct {
-	cfg    config.Config
-	engine *gin.Engine
+	cfg        config.Config
+	engine     *gin.Engine
+	httpServer *http.Server
 }
 
-func NewServer(cfg config.Config, db *sql.DB) *Server {
+func NewServer(
+	cfg config.Config,
+	authHandler *handlers.AuthHandler,
+	authMiddleware gin.HandlerFunc,
+) *Server {
 	engine := gin.Default()
-
-	userRepo := repository.NewUserRepository(db)
-	jwtManager := auth.NewManager(cfg.JWTSecret)
-	authHandler := handlers.NewAuthHandler(userRepo, jwtManager)
+	engine.Use(allowCORS())
 
 	engine.GET("/healthz", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
@@ -34,15 +35,35 @@ func NewServer(cfg config.Config, db *sql.DB) *Server {
 	engine.POST("/auth/login", authHandler.Login)
 
 	protected := engine.Group("/")
-	protected.Use(middleware.RequireAuth(jwtManager))
+	protected.Use(authMiddleware)
 	protected.GET("/auth/me", authHandler.Me)
 
+	httpServer := &http.Server{
+		Addr:              fmt.Sprintf(":%s", cfg.HTTPPort),
+		Handler:           engine,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
 	return &Server{
-		cfg:    cfg,
-		engine: engine,
+		cfg:        cfg,
+		engine:     engine,
+		httpServer: httpServer,
 	}
 }
 
-func (s *Server) Run() error {
-	return s.engine.Run(fmt.Sprintf(":%s", s.cfg.HTTPPort))
+func (s *Server) Start() error {
+	log.Printf("http server listening on :%s", s.cfg.HTTPPort)
+	err := s.httpServer.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		return err
+	}
+	return nil
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.httpServer.Shutdown(ctx)
+}
+
+func (s *Server) Handler() http.Handler {
+	return s.httpServer.Handler
 }
