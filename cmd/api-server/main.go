@@ -10,6 +10,7 @@ import (
 	"mangahub/internal/auth"
 	"mangahub/internal/config"
 	"mangahub/internal/database"
+	internalgrpc "mangahub/internal/grpc"
 	"mangahub/internal/http/handlers"
 	"mangahub/internal/http/middleware"
 	httprouter "mangahub/internal/http/router"
@@ -17,6 +18,7 @@ import (
 	"mangahub/internal/services"
 	"mangahub/internal/tcp"
 	"mangahub/internal/udp"
+	"mangahub/internal/ws"
 )
 
 func main() {
@@ -45,11 +47,13 @@ func main() {
 	)
 	tcpServer := tcp.NewServer(cfg, progressService)
 	udpServer := udp.NewServer(cfg, notificationService)
+	wsServer := ws.NewServer(cfg, jwtManager)
+	grpcServer := internalgrpc.NewServer(cfg, notificationService)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	errCh := make(chan error, 3)
+	errCh := make(chan error, 5)
 	go func() {
 		errCh <- httpServer.Start()
 	}()
@@ -58,6 +62,12 @@ func main() {
 	}()
 	go func() {
 		errCh <- udpServer.Start(ctx)
+	}()
+	go func() {
+		errCh <- wsServer.Start(ctx)
+	}()
+	go func() {
+		errCh <- grpcServer.Start(ctx)
 	}()
 
 	select {
@@ -74,5 +84,8 @@ func main() {
 
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		log.Printf("http shutdown error: %v", err)
+	}
+	if err := wsServer.Shutdown(shutdownCtx); err != nil {
+		log.Printf("websocket shutdown error: %v", err)
 	}
 }
