@@ -8,4 +8,5 @@ type Manga struct {
 	Status        string   `json:"status"`
 	TotalChapters int      `json:"total_chapters"`
 	Description   string   `json:"description"`
+	CoverURL      string   `json:"cover_url"`
 }

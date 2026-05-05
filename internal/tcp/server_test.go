@@ -280,6 +280,9 @@ func TestSeedMangaRunsOnlyOnce(t *testing.T) {
 	if err := db.QueryRow(`SELECT COUNT(*) FROM manga`).Scan(&firstCount); err != nil {
 		t.Fatalf("count manga error = %v", err)
 	}
+	if firstCount < 30 {
+		t.Fatalf("first manga count = %d, want at least 30", firstCount)
+	}
 
 	db2, err := database.NewSQLite(dbPath)
 	if err != nil {

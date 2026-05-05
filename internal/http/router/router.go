@@ -22,6 +22,8 @@ type Server struct {
 func NewServer(
 	cfg config.Config,
 	authHandler *handlers.AuthHandler,
+	mangaHandler *handlers.MangaHandler,
+	libraryHandler *handlers.LibraryHandler,
 	authMiddleware gin.HandlerFunc,
 ) *Server {
 	engine := gin.Default()
@@ -33,10 +35,15 @@ func NewServer(
 
 	engine.POST("/auth/register", authHandler.Register)
 	engine.POST("/auth/login", authHandler.Login)
+	engine.GET("/manga", mangaHandler.List)
+	engine.GET("/manga/:id", mangaHandler.Get)
 
 	protected := engine.Group("/")
 	protected.Use(authMiddleware)
 	protected.GET("/auth/me", authHandler.Me)
+	protected.POST("/users/library", libraryHandler.Add)
+	protected.GET("/users/library", libraryHandler.List)
+	protected.PUT("/users/progress", libraryHandler.UpdateProgress)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf(":%s", cfg.HTTPPort),

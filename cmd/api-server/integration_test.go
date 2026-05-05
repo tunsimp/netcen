@@ -55,7 +55,13 @@ func TestProtocolIntegrationWeek8(t *testing.T) {
 	progressService := services.NewProgressService(mangaRepo, progressRepo)
 	notificationService := services.NewNotificationService(mangaRepo)
 
-	httpServer := httprouter.NewServer(cfg, handlers.NewAuthHandler(userRepo, jwtManager), middleware.RequireAuth(jwtManager))
+	httpServer := httprouter.NewServer(
+		cfg,
+		handlers.NewAuthHandler(userRepo, jwtManager),
+		handlers.NewMangaHandler(mangaRepo),
+		handlers.NewLibraryHandler(progressRepo, progressService),
+		middleware.RequireAuth(jwtManager),
+	)
 	tcpServer := tcp.NewServer(cfg, progressService)
 	udpServer := udp.NewServer(cfg, notificationService)
 	wsServer := ws.NewServer(cfg, jwtManager)
