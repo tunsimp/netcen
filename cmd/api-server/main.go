@@ -39,10 +39,14 @@ func main() {
 	notificationService := services.NewNotificationService(mangaRepo)
 
 	authHandler := handlers.NewAuthHandler(userRepo, jwtManager)
+	mangaHandler := handlers.NewMangaHandler(mangaRepo)
+	libraryHandler := handlers.NewLibraryHandler(progressRepo, progressService)
 
 	httpServer := httprouter.NewServer(
 		cfg,
 		authHandler,
+		mangaHandler,
+		libraryHandler,
 		middleware.RequireAuth(jwtManager),
 	)
 	tcpServer := tcp.NewServer(cfg, progressService)
