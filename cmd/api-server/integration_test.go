@@ -65,7 +65,7 @@ func TestProtocolIntegrationWeek8(t *testing.T) {
 	tcpServer := tcp.NewServer(cfg, progressService)
 	udpServer := udp.NewServer(cfg, notificationService)
 	wsServer := ws.NewServer(cfg, jwtManager)
-	grpcServer := internalgrpc.NewServer(cfg, notificationService)
+	grpcServer := internalgrpc.NewServer(cfg, mangaRepo, progressService, notificationService)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

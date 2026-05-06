@@ -3,6 +3,7 @@ package grpc_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net"
 	"path/filepath"
@@ -22,23 +23,7 @@ import (
 func TestHealthCheck(t *testing.T) {
 	t.Parallel()
 
-	cfg := config.Config{
-		GRPCPort: freeTCPPort(t),
-	}
-
-	db := newTestDB(t)
-	notificationService := services.NewNotificationService(repository.NewMangaRepository(db))
-	server := internalgrpc.NewServer(cfg, notificationService)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	errCh := make(chan error, 1)
-	go func() {
-		errCh <- server.Start(ctx)
-	}()
-
-	conn := mustDialGRPC(t, cfg.GRPCPort)
+	cancel, errCh, conn := startTestGRPCServer(t)
 	defer conn.Close()
 
 	var res internalgrpc.HealthCheckResponse
@@ -49,15 +34,91 @@ func TestHealthCheck(t *testing.T) {
 		t.Fatalf("Status = %s, want ok", res.Status)
 	}
 
-	cancel()
-	select {
-	case err := <-errCh:
-		if err != nil {
-			t.Fatalf("server.Start() error = %v", err)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("grpc server did not stop in time")
+	stopGRPCServer(t, cancel, errCh)
+}
+
+func TestGetManga(t *testing.T) {
+	t.Parallel()
+
+	cancel, errCh, conn := startTestGRPCServer(t)
+	defer conn.Close()
+
+	var res internalgrpc.MangaResponse
+	if err := conn.Invoke(context.Background(), internalgrpc.MethodGetManga, &internalgrpc.GetMangaRequest{
+		MangaID: "one-piece",
+	}, &res); err != nil {
+		t.Fatalf("Invoke(GetManga) error = %v", err)
 	}
+	if res.ID != "one-piece" {
+		t.Fatalf("ID = %s, want one-piece", res.ID)
+	}
+	if res.Title == "" {
+		t.Fatal("Title is empty")
+	}
+
+	stopGRPCServer(t, cancel, errCh)
+}
+
+func TestSearchManga(t *testing.T) {
+	t.Parallel()
+
+	cancel, errCh, conn := startTestGRPCServer(t)
+	defer conn.Close()
+
+	var res internalgrpc.SearchResponse
+	if err := conn.Invoke(context.Background(), internalgrpc.MethodSearchManga, &internalgrpc.SearchRequest{
+		Query: "piece",
+	}, &res); err != nil {
+		t.Fatalf("Invoke(SearchManga) error = %v", err)
+	}
+	if len(res.Manga) == 0 {
+		t.Fatal("SearchManga returned empty result")
+	}
+
+	stopGRPCServer(t, cancel, errCh)
+}
+
+func TestUpdateProgress(t *testing.T) {
+	t.Parallel()
+
+	cancel, errCh, conn := startTestGRPCServer(t)
+	defer conn.Close()
+
+	var res internalgrpc.ProgressResponse
+	if err := conn.Invoke(context.Background(), internalgrpc.MethodUpdateProgress, &internalgrpc.ProgressRequest{
+		UserID:    "user-1",
+		MangaID:   "one-piece",
+		Chapter:   123,
+		Status:    "reading",
+		Timestamp: 1710000000,
+	}, &res); err != nil {
+		t.Fatalf("Invoke(UpdateProgress) error = %v", err)
+	}
+	if res.UserID != "user-1" || res.MangaID != "one-piece" || res.Chapter != 123 {
+		t.Fatalf("ProgressResponse = %#v", res)
+	}
+
+	stopGRPCServer(t, cancel, errCh)
+}
+
+func TestUpdateProgressRejectsUnknownManga(t *testing.T) {
+	t.Parallel()
+
+	cancel, errCh, conn := startTestGRPCServer(t)
+	defer conn.Close()
+
+	var res internalgrpc.ProgressResponse
+	err := conn.Invoke(context.Background(), internalgrpc.MethodUpdateProgress, &internalgrpc.ProgressRequest{
+		UserID:    "user-1",
+		MangaID:   "missing",
+		Chapter:   1,
+		Status:    "reading",
+		Timestamp: 1710000000,
+	}, &res)
+	if err == nil {
+		t.Fatal("Invoke(UpdateProgress) expected error for unknown manga")
+	}
+	stopGRPCServer(t, cancel, errCh)
 }
 
 func TestPublishNotification(t *testing.T) {
@@ -66,10 +127,12 @@ func TestPublishNotification(t *testing.T) {
 	cfg := config.Config{
 		GRPCPort: freeTCPPort(t),
 	}
-
 	db := newTestDB(t)
-	notificationService := services.NewNotificationService(repository.NewMangaRepository(db))
-	server := internalgrpc.NewServer(cfg, notificationService)
+	mangaRepo := repository.NewMangaRepository(db)
+	progressRepo := repository.NewProgressRepository(db)
+	progressService := services.NewProgressService(mangaRepo, progressRepo)
+	notificationService := services.NewNotificationService(mangaRepo)
+	server := internalgrpc.NewServer(cfg, mangaRepo, progressService, notificationService)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -113,6 +176,44 @@ func TestPublishNotification(t *testing.T) {
 	select {
 	case err := <-errCh:
 		if err != nil {
+			t.Fatalf("server.Start() error = %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("grpc server did not stop in time")
+	}
+}
+
+func startTestGRPCServer(t *testing.T) (context.CancelFunc, chan error, *gogrpc.ClientConn) {
+	t.Helper()
+
+	cfg := config.Config{
+		GRPCPort: freeTCPPort(t),
+	}
+
+	db := newTestDB(t)
+	mangaRepo := repository.NewMangaRepository(db)
+	progressRepo := repository.NewProgressRepository(db)
+	progressService := services.NewProgressService(mangaRepo, progressRepo)
+	notificationService := services.NewNotificationService(mangaRepo)
+	server := internalgrpc.NewServer(cfg, mangaRepo, progressService, notificationService)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.Start(ctx)
+	}()
+
+	conn := mustDialGRPC(t, cfg.GRPCPort)
+	return cancel, errCh, conn
+}
+
+func stopGRPCServer(t *testing.T, cancel context.CancelFunc, errCh chan error) {
+	t.Helper()
+
+	cancel()
+	select {
+	case err := <-errCh:
+		if err != nil && !errors.Is(err, net.ErrClosed) {
 			t.Fatalf("server.Start() error = %v", err)
 		}
 	case <-time.After(2 * time.Second):

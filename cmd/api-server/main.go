@@ -52,7 +52,7 @@ func main() {
 	tcpServer := tcp.NewServer(cfg, progressService)
 	udpServer := udp.NewServer(cfg, notificationService)
 	wsServer := ws.NewServer(cfg, jwtManager)
-	grpcServer := internalgrpc.NewServer(cfg, notificationService)
+	grpcServer := internalgrpc.NewServer(cfg, mangaRepo, progressService, notificationService)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

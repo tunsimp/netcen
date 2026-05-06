@@ -24,50 +24,6 @@ func NewMangaRepository(db *sql.DB) *MangaRepository {
 	return &MangaRepository{db: db}
 }
 
-func (r *MangaRepository) List(filters MangaFilters) ([]models.Manga, error) {
-	query := `
-SELECT id, title, author, genres, status, total_chapters, description, cover_url
-FROM manga
-WHERE 1 = 1`
-	args := make([]any, 0, 3)
-
-	if value := strings.TrimSpace(filters.Query); value != "" {
-		query += ` AND (LOWER(title) LIKE ? OR LOWER(author) LIKE ? OR LOWER(description) LIKE ?)`
-		like := "%" + strings.ToLower(value) + "%"
-		args = append(args, like, like, like)
-	}
-	if value := strings.TrimSpace(filters.Genre); value != "" {
-		query += ` AND LOWER(genres) LIKE ?`
-		args = append(args, "%"+strings.ToLower(value)+"%")
-	}
-	if value := strings.TrimSpace(filters.Status); value != "" {
-		query += ` AND LOWER(status) = ?`
-		args = append(args, strings.ToLower(value))
-	}
-
-	query += ` ORDER BY title ASC;`
-
-	rows, err := r.db.Query(query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query manga list: %w", err)
-	}
-	defer rows.Close()
-
-	var mangaList []models.Manga
-	for rows.Next() {
-		manga, err := scanManga(rows.Scan)
-		if err != nil {
-			return nil, err
-		}
-		mangaList = append(mangaList, *manga)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to iterate manga list: %w", err)
-	}
-
-	return mangaList, nil
-}
-
 func (r *MangaRepository) FindByID(id string) (*models.Manga, error) {
 	row := r.db.QueryRow(`
 SELECT id, title, author, genres, status, total_chapters, description, cover_url
@@ -83,6 +39,63 @@ WHERE id = ?;`, id)
 	}
 
 	return manga, nil
+}
+
+func (r *MangaRepository) List(filters MangaFilters) ([]models.Manga, error) {
+	baseSQL := `
+SELECT id, title, author, genres, status, total_chapters, description, cover_url
+FROM manga`
+
+	conditions := make([]string, 0, 3)
+	args := make([]any, 0, 3)
+
+	query := strings.TrimSpace(filters.Query)
+	if query != "" {
+		conditions = append(conditions, "(lower(title) LIKE lower(?) OR lower(author) LIKE lower(?))")
+		searchValue := "%" + query + "%"
+		args = append(args, searchValue, searchValue)
+	}
+
+	genre := strings.TrimSpace(filters.Genre)
+	if genre != "" {
+		conditions = append(conditions, "lower(genres) LIKE lower(?)")
+		args = append(args, "%"+genre+"%")
+	}
+
+	status := strings.TrimSpace(filters.Status)
+	if status != "" {
+		conditions = append(conditions, "lower(status) = lower(?)")
+		args = append(args, status)
+	}
+
+	if len(conditions) > 0 {
+		baseSQL += "\nWHERE " + strings.Join(conditions, " AND ")
+	}
+	baseSQL += "\nORDER BY title ASC;"
+
+	rows, err := r.db.Query(baseSQL, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list manga: %w", err)
+	}
+	defer rows.Close()
+
+	results := make([]models.Manga, 0)
+	for rows.Next() {
+		manga, scanErr := scanManga(rows.Scan)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		results = append(results, *manga)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate manga list rows: %w", err)
+	}
+
+	return results, nil
+}
+
+func (r *MangaRepository) Search(query string) ([]models.Manga, error) {
+	return r.List(MangaFilters{Query: query})
 }
 
 func scanManga(scan func(dest ...any) error) (*models.Manga, error) {
