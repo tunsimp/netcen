@@ -12,6 +12,8 @@ import (
 func RegisterHTTPRoutes(router *gin.Engine, db *sql.DB) {
 	router.GET("/manga", searchMangaHandler(db))
 	router.GET("/manga/:id", getMangaByIDHandler(db))
+	router.POST("/manga", createMangaHandler(db))
+	router.POST("/manga/import/mangadex", importMangaDexHandler(db))
 }
 
 func searchMangaHandler(db *sql.DB) gin.HandlerFunc {
@@ -109,5 +111,55 @@ func getMangaByIDHandler(db *sql.DB) gin.HandlerFunc {
 			"total_chapters": totalChapters.Int64,
 			"description":    description.String,
 		})
+	}
+}
+
+func createMangaHandler(db *sql.DB) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var manga Manga
+		if err := ctx.ShouldBindJSON(&manga); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+			return
+		}
+
+		err := InsertManga(db, manga)
+		if err != nil {
+			status := http.StatusBadRequest
+			if errors.Is(err, ErrMangaExists) {
+				status = http.StatusConflict
+			}
+			ctx.JSON(status, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, gin.H{"message": "manga created", "data": manga})
+	}
+}
+
+func importMangaDexHandler(db *sql.DB) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		title := strings.TrimSpace(ctx.Query("title"))
+		if title == "" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "title query is required"})
+			return
+		}
+
+		manga, err := FetchFromMangaDex(title)
+		if err != nil {
+			ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+			return
+		}
+
+		err = InsertManga(db, manga)
+		if err != nil {
+			status := http.StatusBadRequest
+			if errors.Is(err, ErrMangaExists) {
+				status = http.StatusConflict
+			}
+			ctx.JSON(status, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, gin.H{"message": "manga imported from mangadex", "data": manga})
 	}
 }

@@ -42,7 +42,7 @@ func (s *APIServer) registerRoutes() {
 	users := s.Router.Group("/users")
 	authMiddleware := auth.AuthMiddleware(s.AuthService)
 	users.Use(authMiddleware)
-	user.RegisterHTTPRoutes(users, s.Database)
+	user.RegisterHTTPRoutes(users, s.Database, "localhost:9000")
 	ws.RegisterHTTPRoutes(s.Router, authMiddleware, s.ChatHub)
 }
 
@@ -64,6 +64,11 @@ func main() {
 	server := NewAPIServer(db, "secret-key")
 
 	err = server.AuthService.EnsureSchema()
+	if err != nil {
+		panic(err)
+	}
+
+	err = manga.SeedFromJSON(db, "data/manga_seed.json")
 	if err != nil {
 		panic(err)
 	}

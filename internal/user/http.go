@@ -3,7 +3,9 @@ package user
 import (
 	"database/sql"
 	"net/http"
+	"project/internal/tcp"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,10 +20,10 @@ type updateProgressRequest struct {
 	ReadingStatus  string `json:"status"`
 }
 
-func RegisterHTTPRoutes(group *gin.RouterGroup, db *sql.DB) {
+func RegisterHTTPRoutes(group *gin.RouterGroup, db *sql.DB, tcpAddress string) {
 	group.POST("/library", addToLibraryHandler(db))
 	group.GET("/library", getLibraryHandler(db))
-	group.PUT("/progress", updateProgressHandler(db))
+	group.PUT("/progress", updateProgressHandler(db, tcpAddress))
 }
 
 func addToLibraryHandler(db *sql.DB) gin.HandlerFunc {
@@ -101,7 +103,7 @@ func getLibraryHandler(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func updateProgressHandler(db *sql.DB) gin.HandlerFunc {
+func updateProgressHandler(db *sql.DB, tcpAddress string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userID, exists := ctx.Get("userID")
 		if !exists {
@@ -139,6 +141,18 @@ func updateProgressHandler(db *sql.DB) gin.HandlerFunc {
 		)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update progress"})
+			return
+		}
+
+		update := tcp.ProgressUpdate{
+			UserID:    userID.(string),
+			MangaID:   req.MangaID,
+			Chapter:   req.CurrentChapter,
+			Status:    req.ReadingStatus,
+			Timestamp: time.Now().Unix(),
+		}
+		if err := tcp.SendProgressUpdate(tcpAddress, update); err != nil {
+			ctx.JSON(http.StatusBadGateway, gin.H{"error": "failed to forward progress update to TCP server"})
 			return
 		}
 
