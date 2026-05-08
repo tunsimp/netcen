@@ -13,6 +13,12 @@ It combines HTTP REST, TCP, UDP, WebSocket, and gRPC services with a shared SQLi
 - SQLite persistence with schema initialization and manga seed data
 - Docker Compose for multi-service local deployment
 
+## Documentation
+
+- API documentation: `docs/API.md`
+- Code documentation: `docs/CODE.md`
+- Implementation report: `report.md`
+
 ## Project Structure
 
 ```text
