@@ -1,0 +1,55 @@
+services:
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TARGET: ./cmd/api-server
+    container_name: mangahub-api
+    environment:
+      SQLITE_PATH: /app/data/mangahub.db
+      TCP_SERVER_ADDR: tcp-server:9000
+    ports:
+      - "8080:8080"
+    volumes:
+      - mangahub-data:/app/data
+    depends_on:
+      - tcp-server
+      - grpc-server
+
+  grpc-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TARGET: ./cmd/grpc-server
+    container_name: mangahub-grpc
+    environment:
+      SQLITE_PATH: /app/data/mangahub.db
+    ports:
+      - "9090:9090"
+    volumes:
+      - mangahub-data:/app/data
+
+  tcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TARGET: ./cmd/tcp-server
+    container_name: mangahub-tcp
+    ports:
+      - "9000:9000"
+
+  udp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TARGET: ./cmd/udp-server
+    container_name: mangahub-udp
+    ports:
+      - "9001:9001/udp"
+
+volumes:
+  mangahub-data:
