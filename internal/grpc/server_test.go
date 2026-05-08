@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"testing"
 
-	"project/internal/auth"
 	mangapb "project/internal/grpc/gen"
+	"project/pkg/database"
 
 	"github.com/stretchr/testify/require"
 	_ "modernc.org/sqlite"
@@ -18,8 +18,7 @@ func setupGRPCTestServer(t *testing.T) (*MangaServiceServer, *sql.DB) {
 	db, err := sql.Open("sqlite", "file::memory:?cache=shared")
 	require.NoError(t, err)
 
-	authService := auth.NewService(db, []byte("test-secret"))
-	require.NoError(t, authService.EnsureSchema())
+	require.NoError(t, database.EnsureSchema(db))
 
 	_, err = db.Exec(`INSERT INTO manga(id, title, author, genres, status, total_chapters, description)
 	VALUES ('one-piece', 'One Piece', 'Eiichiro Oda', 'action, adventure', 'ongoing', 1100, 'Pirate journey')`)

@@ -81,8 +81,9 @@ This starts:
 ## Database
 
 - SQLite path defaults to `data/mangahub.db`
-- API server initializes schema on startup
+- API server and gRPC server initialize schema on startup
 - API server seeds manga from `data/manga_seed.json` on startup
+- Seed data contains 40 manga series across action, shounen, shoujo, seinen, josei, romance, sports, fantasy, and other genres
 
 Environment variables:
 - `SQLITE_PATH` (optional)
@@ -207,6 +208,81 @@ Update progress:
 ```bash
 grpcurl -plaintext -d '{"user_id":"1","manga_id":"one-piece","current_chapter":5,"status":"reading"}' localhost:9090 mangahub.v1.MangaService/UpdateProgress
 ```
+
+## Manual Demo Flow
+
+Use this flow to demonstrate the five required protocols.
+
+### 1. Start services
+
+Start each service in a separate terminal:
+
+```bash
+go run ./cmd/tcp-server
+go run ./cmd/udp-server
+go run ./cmd/grpc-server
+go run ./cmd/api-server
+```
+
+### 2. HTTP authentication and manga API
+
+Register and login:
+
+```powershell
+$body = '{"username":"alice","password":"123456"}'
+Invoke-RestMethod -Method Post -Uri http://localhost:8080/auth/register -Body $body -ContentType "application/json"
+$login = Invoke-RestMethod -Method Post -Uri http://localhost:8080/auth/login -Body $body -ContentType "application/json"
+$token = $login.token
+$headers = @{ Authorization = "Bearer $token" }
+```
+
+Search and read manga details:
+
+```powershell
+Invoke-RestMethod "http://localhost:8080/manga?genre=Shoujo"
+Invoke-RestMethod "http://localhost:8080/manga/one-piece"
+```
+
+### 3. HTTP to TCP progress sync
+
+Add a manga to the user's library and update progress:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:8080/users/library -Headers $headers -Body '{"manga_id":"one-piece"}' -ContentType "application/json"
+Invoke-RestMethod -Method Put -Uri http://localhost:8080/users/progress -Headers $headers -Body '{"manga_id":"one-piece","current_chapter":10,"status":"reading"}' -ContentType "application/json"
+```
+
+The API stores the progress update in SQLite and forwards it to the TCP server.
+
+### 4. gRPC internal service
+
+Run the gRPC client demo:
+
+```bash
+go run ./cmd/grpc-client
+```
+
+### 5. WebSocket and UDP
+
+- WebSocket chat is available at `ws://localhost:8080/ws/chat` with `Authorization: Bearer <jwt>`.
+- UDP notification server listens on `9001/udp`; clients register by sending `register`, then receive broadcast notifications.
+
+## Testing
+
+Run all tests:
+
+```bash
+go test ./...
+```
+
+Current test coverage includes:
+
+- Auth registration, login, and protected middleware behavior
+- gRPC manga query/search/progress update behavior
+- WebSocket chat broadcast behavior
+- TCP progress update send and broadcast behavior
+- UDP notification broadcast behavior
+- Manga insert, validation, seed data, search, detail, and create routes
 
 ## Protobuf Regeneration (optional)
 

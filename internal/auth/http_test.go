@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 	_ "modernc.org/sqlite"
+	"project/pkg/database"
 )
 
 func setupAuthTest(t *testing.T) (*gin.Engine, *Service, *sql.DB) {
@@ -21,7 +22,7 @@ func setupAuthTest(t *testing.T) (*gin.Engine, *Service, *sql.DB) {
 	require.NoError(t, err)
 
 	service := NewService(db, []byte("test-secret"))
-	require.NoError(t, service.EnsureSchema())
+	require.NoError(t, database.EnsureSchema(db))
 
 	router := gin.New()
 	RegisterHTTPRoutes(router, service)

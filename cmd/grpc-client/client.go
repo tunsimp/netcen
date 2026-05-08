@@ -1,14 +1,15 @@
 package main
+
 import (
 	"context"
-	"log"
-	"time"
-	mangapb "project/internal/grpc/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"log"
+	mangapb "project/internal/grpc/gen"
+	"time"
 )
 
-func main(){
+func main() {
 	var conn *grpc.ClientConn
 	conn, err := grpc.Dial("localhost:9090", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

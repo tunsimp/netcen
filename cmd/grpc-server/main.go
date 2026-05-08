@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	mangapb "project/internal/grpc/gen"
 	grpcserver "project/internal/grpc"
+	mangapb "project/internal/grpc/gen"
 	"project/pkg/database"
 )
 
@@ -23,6 +23,10 @@ func main() {
 		log.Fatalf("failed to open database: %v", err)
 	}
 	defer db.Close()
+
+	if err := database.EnsureSchema(db); err != nil {
+		log.Fatalf("failed to ensure database schema: %v", err)
+	}
 
 	lis, err := net.Listen("tcp", ":9090")
 	if err != nil {

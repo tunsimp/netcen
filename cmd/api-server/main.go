@@ -66,12 +66,12 @@ func main() {
 	}
 	defer db.Close()
 
-	server := NewAPIServer(db, "secret-key")
-
-	err = server.AuthService.EnsureSchema()
+	err = database.EnsureSchema(db)
 	if err != nil {
 		panic(err)
 	}
+
+	server := NewAPIServer(db, "secret-key")
 
 	err = manga.SeedFromJSON(db, "data/manga_seed.json")
 	if err != nil {
