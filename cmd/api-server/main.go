@@ -39,10 +39,15 @@ func (s *APIServer) registerRoutes() {
 	auth.RegisterHTTPRoutes(s.Router, s.AuthService)
 	manga.RegisterHTTPRoutes(s.Router, s.Database)
 
+	tcpServerAddress := os.Getenv("TCP_SERVER_ADDR")
+	if tcpServerAddress == "" {
+		tcpServerAddress = "localhost:9000"
+	}
+
 	users := s.Router.Group("/users")
 	authMiddleware := auth.AuthMiddleware(s.AuthService)
 	users.Use(authMiddleware)
-	user.RegisterHTTPRoutes(users, s.Database, "localhost:9000")
+	user.RegisterHTTPRoutes(users, s.Database, tcpServerAddress)
 	ws.RegisterHTTPRoutes(s.Router, authMiddleware, s.ChatHub)
 }
 
