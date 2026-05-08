@@ -131,7 +131,27 @@ go test ./...
 
 ---
 
-## 7) How To Run
+## 7) Deployment Files Added
+
+To support deployment and grading requirements, I added:
+
+- `Dockerfile`
+  - multi-stage build
+  - configurable target binary (`TARGET`) so one Dockerfile can build API/TCP/UDP/gRPC services
+- `docker-compose.yml`
+  - `api-server` on `8080`
+  - `tcp-server` on `9000`
+  - `udp-server` on `9001/udp`
+  - `grpc-server` on `9090`
+  - shared named volume for SQLite data
+- `testify`-based tests:
+  - `internal/auth/http_test.go`
+  - `internal/ws/http_test.go`
+  - `internal/grpc/server_test.go`
+
+---
+
+## 8) How To Run
 
 ## A) Run locally (separate terminals)
 
@@ -161,7 +181,7 @@ This starts all services with the same port mapping as local mode.
 
 ---
 
-## 8) Demo Checklist
+## 9) Demo Checklist
 
 1. Register and login via HTTP (`/auth/register`, `/auth/login`)
 2. Call manga APIs (`/manga`, `/manga/:id`)
@@ -171,7 +191,7 @@ This starts all services with the same port mapping as local mode.
 
 ---
 
-## 9) Conclusion
+## 10) Conclusion
 
 The project is implemented in modular phases, starting from core HTTP/auth/database and extending to multi-protocol communication (TCP, UDP, WebSocket, gRPC).  
 This structure supports both course demonstration requirements and further extension.
