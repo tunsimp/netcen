@@ -144,14 +144,24 @@ func updateProgressHandler(db *sql.DB, tcpAddress string) gin.HandlerFunc {
 			return
 		}
 
-		update := tcp.ProgressUpdate{
-			UserID:    userID.(string),
-			MangaID:   req.MangaID,
-			Chapter:   req.CurrentChapter,
-			Status:    req.ReadingStatus,
-			Timestamp: time.Now().Unix(),
+		deviceID := ctx.GetHeader("X-Device-ID")
+		if deviceID == "" {
+			deviceID = "http-api"
 		}
-		if err := tcp.SendProgressUpdate(tcpAddress, update); err != nil {
+		tokenString := strings.TrimPrefix(ctx.GetHeader("Authorization"), "Bearer ")
+
+		msg := tcp.ProgressSyncMessage{
+			ProgressUpdate: tcp.ProgressUpdate{
+				UserID:    userID.(string),
+				MangaID:   req.MangaID,
+				Chapter:   req.CurrentChapter,
+				Status:    req.ReadingStatus,
+				Timestamp: time.Now().Unix(),
+			},
+			DeviceID: tcp.DeviceID(deviceID),
+		}
+		
+		if err := tcp.SendProgressUpdate(tcpAddress, msg, tokenString); err != nil {
 			ctx.JSON(http.StatusBadGateway, gin.H{"error": "failed to forward progress update to TCP server"})
 			return
 		}

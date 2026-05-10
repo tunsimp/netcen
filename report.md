@@ -191,8 +191,22 @@ This starts all services with the same port mapping as local mode.
 
 ---
 
-## 10) Conclusion
+## 10) TCP Multi-Device Sync Bonus
+
+I added an advanced synchronization feature for the TCP module.
+
+### Features
+- **TCP Device Registration:** Clients must register with a valid JWT and a unique `DeviceID` upon connecting.
+- **Smart Routing:** TCP progress updates are only broadcast to *other* registered devices of the same user, rather than all connected TCP clients.
+- **Spoofing Protection:** The server verifies that incoming `ProgressSyncMessage` matches the registered `UserID` and `DeviceID` to prevent users from spoofing data for other users or devices.
+- **Conflict Resolution:** A basic "last-write-wins" strategy is implemented by tracking the latest progress update timestamp per user and manga. Stale updates return `ignored_stale_update`, while successful ones return `accepted_last_write_wins`.
+- **HTTP Integration:** The `/users/progress` endpoint now forwards an `X-Device-ID` header (defaulting to `http-api`) and the JWT token to the TCP server, making HTTP updates seamlessly trigger TCP syncs to mobile or desktop clients.
+
+---
+
+## 11) Conclusion
 
 The project is implemented in modular phases, starting from core HTTP/auth/database and extending to multi-protocol communication (TCP, UDP, WebSocket, gRPC).  
 This structure supports both course demonstration requirements and further extension.
+
 

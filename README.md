@@ -13,6 +13,13 @@ It combines HTTP REST, TCP, UDP, WebSocket, and gRPC services with a shared SQLi
 - SQLite persistence with schema initialization and manga seed data
 - Docker Compose for multi-service local deployment
 
+### Bonus Feature: TCP Multi-Device Sync
+- TCP device registration via JWT + Device ID.
+- TCP progress updates are routed ONLY to other registered devices of the SAME user.
+- Security against spoofed `user_id` / `device_id` across active connections.
+- Conflict resolution using Last-Write-Wins (`accepted_last_write_wins` vs `ignored_stale_update`).
+- HTTP API forwarded `X-Device-ID` integration.
+
 ## Documentation
 
 - API documentation: `docs/API.md`
