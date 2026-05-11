@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	mangapb "project/internal/grpc/gen"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 	}
 	log.Printf("SearchManga response: %+v \n", searchResp)
 
-	updateResp, err := c.UpdateProgress(ctx, &mangapb.ProgressRequest{UserId: "1", MangaId: "one-piece", CurrentChapter: 1, Status: "reading"})
+	updateResp, err := c.UpdateProgress(ctx, &mangapb.ProgressRequest{UserId: "1", MangaId: "one-piece", CurrentChapter: 10, Status: "reading"})
 	if err != nil {
 		log.Fatalf("error when calling UpdateProgress: %v", err)
 	}
