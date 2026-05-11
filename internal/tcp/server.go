@@ -22,7 +22,8 @@ type ProgressHub struct {
 func NewProgressHub(port string) *ProgressHub {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		fmt.Println("WARNING: JWT_SECRET environment variable not set. JWT validation will fail.")
+		fmt.Println("WARNING: JWT_SECRET environment variable not set. Defaulting to 'secret-key'.")
+		secret = "secret-key"
 	}
 
 	return &ProgressHub{
