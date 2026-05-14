@@ -1,0 +1,402 @@
+[
+  {
+    "id": "one-piece",
+    "title": "One Piece",
+    "author": "Eiichiro Oda",
+    "genres": ["Action", "Adventure", "Fantasy"],
+    "status": "ongoing",
+    "total_chapters": 1100,
+    "description": "A pirate adventure following Monkey D. Luffy and his crew searching for the One Piece treasure.",
+    "source": "manual"
+  },
+  {
+    "id": "naruto",
+    "title": "Naruto",
+    "author": "Masashi Kishimoto",
+    "genres": ["Action", "Adventure", "Shounen"],
+    "status": "completed",
+    "total_chapters": 700,
+    "description": "A young ninja seeks recognition and dreams of becoming Hokage.",
+    "source": "manual"
+  },
+  {
+    "id": "bleach",
+    "title": "Bleach",
+    "author": "Tite Kubo",
+    "genres": ["Action", "Supernatural", "Shounen"],
+    "status": "completed",
+    "total_chapters": 686,
+    "description": "Ichigo Kurosaki gains Soul Reaper powers and protects humans from evil spirits.",
+    "source": "manual"
+  },
+  {
+    "id": "attack-on-titan",
+    "title": "Attack on Titan",
+    "author": "Hajime Isayama",
+    "genres": ["Action", "Drama", "Dark Fantasy"],
+    "status": "completed",
+    "total_chapters": 139,
+    "description": "Humanity fights for survival against giant humanoid creatures known as Titans.",
+    "source": "manual"
+  },
+  {
+    "id": "demon-slayer",
+    "title": "Demon Slayer",
+    "author": "Koyoharu Gotouge",
+    "genres": ["Action", "Supernatural", "Historical"],
+    "status": "completed",
+    "total_chapters": 205,
+    "description": "Tanjiro Kamado becomes a demon slayer to save his sister and avenge his family.",
+    "source": "manual"
+  },
+  {
+    "id": "jujutsu-kaisen",
+    "title": "Jujutsu Kaisen",
+    "author": "Gege Akutami",
+    "genres": ["Action", "Supernatural", "Dark Fantasy"],
+    "status": "completed",
+    "total_chapters": 271,
+    "description": "Yuji Itadori enters the world of curses after swallowing a powerful cursed object.",
+    "source": "manual"
+  },
+  {
+    "id": "my-hero-academia",
+    "title": "My Hero Academia",
+    "author": "Kohei Horikoshi",
+    "genres": ["Action", "Superhero", "School"],
+    "status": "completed",
+    "total_chapters": 430,
+    "description": "Izuku Midoriya trains to become a hero in a world where most people have superpowers.",
+    "source": "manual"
+  },
+  {
+    "id": "dragon-ball",
+    "title": "Dragon Ball",
+    "author": "Akira Toriyama",
+    "genres": ["Action", "Adventure", "Martial Arts"],
+    "status": "completed",
+    "total_chapters": 519,
+    "description": "Goku's journey from childhood martial artist to defender of Earth and beyond.",
+    "source": "manual"
+  },
+  {
+    "id": "fullmetal-alchemist",
+    "title": "Fullmetal Alchemist",
+    "author": "Hiromu Arakawa",
+    "genres": ["Adventure", "Drama", "Fantasy"],
+    "status": "completed",
+    "total_chapters": 108,
+    "description": "Two brothers search for the Philosopher's Stone after a failed alchemy experiment.",
+    "source": "manual"
+  },
+  {
+    "id": "hunter-x-hunter",
+    "title": "Hunter x Hunter",
+    "author": "Yoshihiro Togashi",
+    "genres": ["Action", "Adventure", "Fantasy"],
+    "status": "hiatus",
+    "total_chapters": 400,
+    "description": "Gon Freecss becomes a Hunter while searching for his father.",
+    "source": "manual"
+  },
+  {
+    "id": "death-note",
+    "title": "Death Note",
+    "author": "Tsugumi Ohba",
+    "genres": ["Mystery", "Psychological", "Supernatural"],
+    "status": "completed",
+    "total_chapters": 108,
+    "description": "Light Yagami discovers a notebook that can kill anyone whose name is written in it.",
+    "source": "manual"
+  },
+  {
+    "id": "tokyo-ghoul",
+    "title": "Tokyo Ghoul",
+    "author": "Sui Ishida",
+    "genres": ["Action", "Horror", "Psychological"],
+    "status": "completed",
+    "total_chapters": 143,
+    "description": "Ken Kaneki struggles with his new life after becoming part ghoul.",
+    "source": "manual"
+  },
+  {
+    "id": "spy-x-family",
+    "title": "Spy x Family",
+    "author": "Tatsuya Endo",
+    "genres": ["Action", "Comedy", "Slice of Life"],
+    "status": "ongoing",
+    "total_chapters": 100,
+    "description": "A spy, an assassin, and a telepath form a fake family while hiding their identities.",
+    "source": "manual"
+  },
+  {
+    "id": "black-clover",
+    "title": "Black Clover",
+    "author": "Yuki Tabata",
+    "genres": ["Action", "Fantasy", "Shounen"],
+    "status": "ongoing",
+    "total_chapters": 370,
+    "description": "Asta aims to become Wizard King despite being born without magic.",
+    "source": "manual"
+  },
+  {
+    "id": "haikyu",
+    "title": "Haikyu!!",
+    "author": "Haruichi Furudate",
+    "genres": ["Sports", "Comedy", "Drama"],
+    "status": "completed",
+    "total_chapters": 402,
+    "description": "A short but determined volleyball player joins Karasuno High's team.",
+    "source": "manual"
+  },
+  {
+    "id": "slam-dunk",
+    "title": "Slam Dunk",
+    "author": "Takehiko Inoue",
+    "genres": ["Sports", "Comedy", "Drama"],
+    "status": "completed",
+    "total_chapters": 276,
+    "description": "Hanamichi Sakuragi joins a high school basketball team and discovers a passion for the sport.",
+    "source": "manual"
+  },
+  {
+    "id": "vagabond",
+    "title": "Vagabond",
+    "author": "Takehiko Inoue",
+    "genres": ["Historical", "Martial Arts", "Drama"],
+    "status": "hiatus",
+    "total_chapters": 327,
+    "description": "A fictionalized retelling of Miyamoto Musashi's path as a swordsman.",
+    "source": "manual"
+  },
+  {
+    "id": "berserk",
+    "title": "Berserk",
+    "author": "Kentaro Miura",
+    "genres": ["Action", "Dark Fantasy", "Horror"],
+    "status": "ongoing",
+    "total_chapters": 375,
+    "description": "Guts, a lone mercenary, struggles through a brutal dark fantasy world.",
+    "source": "manual"
+  },
+  {
+    "id": "kingdom",
+    "title": "Kingdom",
+    "author": "Yasuhisa Hara",
+    "genres": ["Action", "Historical", "Military"],
+    "status": "ongoing",
+    "total_chapters": 800,
+    "description": "An orphaned boy seeks to become a great general during China's Warring States period.",
+    "source": "manual"
+  },
+  {
+    "id": "blue-lock",
+    "title": "Blue Lock",
+    "author": "Muneyuki Kaneshiro",
+    "genres": ["Sports", "Drama", "Psychological"],
+    "status": "ongoing",
+    "total_chapters": 290,
+    "description": "Japan creates an intense football training program to develop the ultimate striker.",
+    "source": "manual"
+  },
+  {
+    "id": "solo-leveling",
+    "title": "Solo Leveling",
+    "author": "Chugong",
+    "genres": ["Action", "Fantasy", "Adventure"],
+    "status": "completed",
+    "total_chapters": 200,
+    "description": "A weak hunter gains a mysterious system that lets him level up without limit.",
+    "source": "manual"
+  },
+  {
+    "id": "vinland-saga",
+    "title": "Vinland Saga",
+    "author": "Makoto Yukimura",
+    "genres": ["Action", "Historical", "Drama"],
+    "status": "ongoing",
+    "total_chapters": 210,
+    "description": "Thorfinn's story moves from revenge to a search for peace in the Viking age.",
+    "source": "manual"
+  },
+  {
+    "id": "made-in-abyss",
+    "title": "Made in Abyss",
+    "author": "Akihito Tsukushi",
+    "genres": ["Adventure", "Fantasy", "Drama"],
+    "status": "ongoing",
+    "total_chapters": 70,
+    "description": "Riko and Reg descend into a mysterious abyss filled with wonders and danger.",
+    "source": "manual"
+  },
+  {
+    "id": "a77742b1-befd-49a4-bff5-1ad4e6b0ef7b",
+    "title": "Chainsaw Man",
+    "author": "Unknown",
+    "genres": ["Award Winning", "Monsters", "Action", "Demons", "Comedy", "Gore", "Horror", "Supernatural"],
+    "status": "completed",
+    "total_chapters": 0,
+    "description": "Broke young man + chainsaw dog demon = Chainsaw Man!\n\nThe name says it all! Denji's life of poverty is changed forever when he merges with his pet chainsaw dog, Pochita! Now he's living in the big city and an official Devil Hunter. But he's got a lot to learn about his new job and chainsaw powers!",
+    "source": "mangadex"
+  },
+  {
+    "id": "fruits-basket",
+    "title": "Fruits Basket",
+    "author": "Natsuki Takaya",
+    "genres": ["Shoujo", "Romance", "Drama", "Supernatural"],
+    "status": "completed",
+    "total_chapters": 136,
+    "description": "Tohru Honda becomes involved with the Soma family, whose members are cursed to transform into zodiac animals.",
+    "source": "manual"
+  },
+  {
+    "id": "kamisama-kiss",
+    "title": "Kamisama Kiss",
+    "author": "Julietta Suzuki",
+    "genres": ["Shoujo", "Romance", "Comedy", "Supernatural"],
+    "status": "completed",
+    "total_chapters": 149,
+    "description": "Nanami becomes a land god after receiving a shrine and forms a bond with a fox familiar.",
+    "source": "manual"
+  },
+  {
+    "id": "ao-haru-ride",
+    "title": "Ao Haru Ride",
+    "author": "Io Sakisaka",
+    "genres": ["Shoujo", "Romance", "School", "Drama"],
+    "status": "completed",
+    "total_chapters": 53,
+    "description": "Futaba reconnects with her first love in high school while learning how both of them have changed.",
+    "source": "manual"
+  },
+  {
+    "id": "kimi-ni-todoke",
+    "title": "Kimi ni Todoke",
+    "author": "Karuho Shiina",
+    "genres": ["Shoujo", "Romance", "School", "Slice of Life"],
+    "status": "completed",
+    "total_chapters": 123,
+    "description": "Sawako, a shy girl misunderstood by classmates, slowly builds friendships and romance.",
+    "source": "manual"
+  },
+  {
+    "id": "nana",
+    "title": "Nana",
+    "author": "Ai Yazawa",
+    "genres": ["Josei", "Drama", "Romance", "Music"],
+    "status": "hiatus",
+    "total_chapters": 84,
+    "description": "Two young women named Nana meet in Tokyo and navigate love, music, friendship, and adulthood.",
+    "source": "manual"
+  },
+  {
+    "id": "chihayafuru",
+    "title": "Chihayafuru",
+    "author": "Yuki Suetsugu",
+    "genres": ["Josei", "Sports", "Drama", "School"],
+    "status": "completed",
+    "total_chapters": 247,
+    "description": "Chihaya pursues competitive karuta with her friends while chasing the dream of becoming queen.",
+    "source": "manual"
+  },
+  {
+    "id": "nodame-cantabile",
+    "title": "Nodame Cantabile",
+    "author": "Tomoko Ninomiya",
+    "genres": ["Josei", "Comedy", "Romance", "Music"],
+    "status": "completed",
+    "total_chapters": 136,
+    "description": "Two music students with opposite personalities grow through classical music and their relationship.",
+    "source": "manual"
+  },
+  {
+    "id": "princess-jellyfish",
+    "title": "Princess Jellyfish",
+    "author": "Akiko Higashimura",
+    "genres": ["Josei", "Comedy", "Slice of Life", "Romance"],
+    "status": "completed",
+    "total_chapters": 84,
+    "description": "A jellyfish-loving woman and her apartment friends are pulled into fashion, identity, and change.",
+    "source": "manual"
+  },
+  {
+    "id": "monster",
+    "title": "Monster",
+    "author": "Naoki Urasawa",
+    "genres": ["Seinen", "Mystery", "Psychological", "Thriller"],
+    "status": "completed",
+    "total_chapters": 162,
+    "description": "A surgeon searches for a former patient who has become a dangerous serial killer.",
+    "source": "manual"
+  },
+  {
+    "id": "20th-century-boys",
+    "title": "20th Century Boys",
+    "author": "Naoki Urasawa",
+    "genres": ["Seinen", "Mystery", "Drama", "Science Fiction"],
+    "status": "completed",
+    "total_chapters": 249,
+    "description": "A group of childhood friends confronts a cult leader whose plans mirror their old stories.",
+    "source": "manual"
+  },
+  {
+    "id": "oyasumi-punpun",
+    "title": "Oyasumi Punpun",
+    "author": "Inio Asano",
+    "genres": ["Seinen", "Drama", "Psychological", "Slice of Life"],
+    "status": "completed",
+    "total_chapters": 147,
+    "description": "Punpun grows from childhood into adulthood through family conflict, loneliness, and difficult choices.",
+    "source": "manual"
+  },
+  {
+    "id": "march-comes-in-like-a-lion",
+    "title": "March Comes in Like a Lion",
+    "author": "Chica Umino",
+    "genres": ["Seinen", "Drama", "Slice of Life", "Sports"],
+    "status": "ongoing",
+    "total_chapters": 210,
+    "description": "A young professional shogi player finds support and healing through a kind family and rivals.",
+    "source": "manual"
+  },
+  {
+    "id": "yona-of-the-dawn",
+    "title": "Yona of the Dawn",
+    "author": "Mizuho Kusanagi",
+    "genres": ["Shoujo", "Adventure", "Fantasy", "Romance"],
+    "status": "ongoing",
+    "total_chapters": 260,
+    "description": "Princess Yona flees her kingdom and gathers allies while growing into a determined leader.",
+    "source": "manual"
+  },
+  {
+    "id": "ouran-high-school-host-club",
+    "title": "Ouran High School Host Club",
+    "author": "Bisco Hatori",
+    "genres": ["Shoujo", "Comedy", "Romance", "School"],
+    "status": "completed",
+    "total_chapters": 83,
+    "description": "Haruhi joins an eccentric school host club after accidentally breaking an expensive vase.",
+    "source": "manual"
+  },
+  {
+    "id": "kaiju-no-8",
+    "title": "Kaiju No. 8",
+    "author": "Naoya Matsumoto",
+    "genres": ["Shounen", "Action", "Science Fiction", "Monsters"],
+    "status": "ongoing",
+    "total_chapters": 120,
+    "description": "Kafka Hibino gains kaiju powers and tries to join the Defense Force he once admired.",
+    "source": "manual"
+  },
+  {
+    "id": "world-trigger",
+    "title": "World Trigger",
+    "author": "Daisuke Ashihara",
+    "genres": ["Shounen", "Action", "Science Fiction", "Strategy"],
+    "status": "ongoing",
+    "total_chapters": 240,
+    "description": "Border agents defend Earth from interdimensional neighbors using tactical battles and trigger weapons.",
+    "source": "manual"
+  }
+]
