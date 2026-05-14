@@ -1,14 +1,18 @@
 # MangaHub Implementation Report
 
+-- _Student 1: Nguyen Quoc Tuan. ID: ITITIU22177_
+-- _Student 2: Nguyen Duc Bao. ID: ITITIU22238_
+
 ## 1) Overview
 
 This report summarizes the implementation flow of the MangaHub project:
 
-1. HTTP API with authentication service and SQLite database
-2. Basic CRUD-style API endpoints for manga and user library/progress
-3. WebSocket real-time chat system
-4. gRPC internal service
-5. Run instructions for all protocols
+1. HTTP Authentication and Basic Database setup
+2. HTTP APIs & TCP Multi-Device Synchronization (Advanced)
+3. UDP Notification Server
+4. WebSocket Real-time Chat
+5. gRPC Internal Service
+6. Run instructions and Demo checklist
 
 ---
 
@@ -39,83 +43,87 @@ This created a stable base for all later protocol features.
 
 ---
 
-## 3) Phase 2: CRUD-style HTTP APIs
+## 3) Phase 2: HTTP APIs & TCP Multi-Device Sync
 
-After auth and DB were stable, I implemented the main API endpoints.
+With auth and DB stable, I implemented the main CRUD APIs and the advanced TCP synchronization server. The HTTP API is tightly integrated with the TCP server to broadcast progress updates.
 
-### Auth endpoints
+### 1. HTTP Endpoints
 
-- `POST /auth/register`
-- `POST /auth/login`
+- **Manga:** `GET /manga` (search/filter), `GET /manga/:id` (detail)
+- **User (JWT-protected):** `POST /users/library` (add), `GET /users/library` (list), `PUT /users/progress` (update reading progress)
 
-### Manga endpoints
+_Notes:_ Input validation is applied for required fields. JSON request/response format is used consistently.
 
-- `GET /manga` (search/filter)
-- `GET /manga/:id` (detail)
+### 2. TCP Synchronization Server (Advanced)
 
-### User endpoints (JWT-protected)
+I implemented an advanced synchronization feature for the TCP module (`internal/tcp/server.go`).
 
-- `POST /users/library` (add manga to library)
-- `GET /users/library` (get user library)
-- `PUT /users/progress` (update reading progress)
-
-### Notes
-
-- Input validation is applied for required fields.
-- JSON request/response format is used consistently.
-- Basic error handling is included for malformed input and DB errors.
+- **TCP Device Registration:** Clients connect to `9000` and must register with a valid JWT and a unique `DeviceID`.
+- **Smart Routing:** TCP progress updates are only broadcast to _other_ registered devices of the same user, rather than all connected TCP clients.
+- **Spoofing Protection:** The server verifies that incoming `ProgressSyncMessage` matches the registered `UserID` and `DeviceID` to prevent users from spoofing data for other users or devices.
+- **Conflict Resolution:** A basic "last-write-wins" strategy is implemented by tracking the latest progress update timestamp per user and manga. Stale updates return `ignored_stale_update`, while successful ones return `accepted_last_write_wins`.
+- **HTTP Integration:** The `PUT /users/progress` HTTP API endpoint automatically forwards an `X-Device-ID` header (defaulting to `http-api`) and the JWT token to the TCP server, making HTTP updates seamlessly trigger TCP syncs to mobile or desktop clients.
 
 ---
 
-## 4) Phase 3: WebSocket Chat
+## 4) Phase 3: UDP Notification Server
+
+Implemented a lightweight UDP server for broadcasting non-critical notifications.
+
+### Components
+
+- UDP server in `internal/udp/server.go`.
+- Server executable in `cmd/udp-server/main.go`.
+
+### Behavior
+
+- Connectionless model listening on port `9001/udp`.
+- Clients send a raw `"register"` string to subscribe.
+- Incoming JSON payloads are immediately broadcast to all registered UDP clients (excluding the sender).
+- Ideal for fast, "fire-and-forget" announcements like new chapter releases.
+
+---
+
+## 5) Phase 4: WebSocket Chat
 
 Next, I implemented real-time chat for manga discussion.
 
 ### Components
 
-- Chat hub in `internal/ws/http.go`:
-  - `Clients`
-  - `Broadcast`
-  - `Register`
-  - `Unregister`
-- WebSocket endpoint:
-  - `GET /ws/chat`
+- Chat hub in `internal/ws/http.go` (`Clients`, `Broadcast`, `Register`, `Unregister`).
+- WebSocket endpoint: `GET /ws/chat`
 
 ### Behavior
 
 - JWT-based user identity is reused from auth middleware.
 - User join/leave messages are broadcast to connected clients.
-- Incoming messages are broadcast to all active clients in real time.
 - Basic connection cleanup is handled on disconnect.
+
+### Client Testing
+
+- Added a command-line WebSocket client in `cmd/ws-client/main.go`.
+- Allows users to connect via terminal, providing the JWT token as an argument.
+- Users can send messages via `stdin` and receive broadcast messages concurrently.
 
 ---
 
-## 5) Phase 4: gRPC Internal Service
+## 6) Phase 5: gRPC Internal Service
 
-After HTTP and WebSocket were complete, I implemented gRPC support.
+After the external-facing protocols were complete, I implemented gRPC support for internal service-to-service communication.
 
 ### Proto definition
 
 - `proto/service.proto`
-- `MangaService` with unary RPC methods:
-  - `GetManga`
-  - `SearchManga`
-  - `UpdateProgress`
+- `MangaService` with unary RPC methods: `GetManga`, `SearchManga`, `UpdateProgress`
 
-### gRPC server
+### gRPC server & client
 
-- `cmd/grpc-server/main.go`
-- Service implementation in `internal/grpc/server.go`
-- Reflection enabled for grpcurl testing
-
-### gRPC client demo
-
-- `cmd/grpc-client/client.go`
-- Calls all three RPC methods and prints responses
+- Server: `cmd/grpc-server/main.go` (listening on `9090`, reflection enabled)
+- Client demo: `cmd/grpc-client/client.go` (calls all three RPC methods)
 
 ---
 
-## 6) Testing
+## 7) Testing
 
 I added `testify`-based tests for key protocol areas:
 
@@ -123,37 +131,22 @@ I added `testify`-based tests for key protocol areas:
 - WebSocket broadcast test (`internal/ws/http_test.go`)
 - gRPC service tests (`internal/grpc/server_test.go`)
 
-All tests run successfully with:
-
-```bash
-go test ./...
-```
+All tests run successfully with `go test ./...`.
 
 ---
 
-## 7) Deployment Files Added
+## 8) Deployment Files Added
 
 To support deployment and grading requirements, I added:
 
-- `Dockerfile`
-  - multi-stage build
-  - configurable target binary (`TARGET`) so one Dockerfile can build API/TCP/UDP/gRPC services
-- `docker-compose.yml`
-  - `api-server` on `8080`
-  - `tcp-server` on `9000`
-  - `udp-server` on `9001/udp`
-  - `grpc-server` on `9090`
-  - shared named volume for SQLite data
-- `testify`-based tests:
-  - `internal/auth/http_test.go`
-  - `internal/ws/http_test.go`
-  - `internal/grpc/server_test.go`
+- `Dockerfile`: Multi-stage build with configurable target binary (`TARGET`).
+- `docker-compose.yml`: Starts `api-server`, `tcp-server`, `udp-server`, `grpc-server`, and a shared volume for SQLite.
 
 ---
 
-## 8) How To Run
+## 9) How To Run
 
-## A) Run locally (separate terminals)
+### A) Run locally (separate terminals)
 
 From project root:
 
@@ -164,43 +157,23 @@ go run ./cmd/grpc-server/main.go
 go run ./cmd/api-server/main.go
 ```
 
-Ports:
+Ports: HTTP (`8080`), TCP (`9000`), UDP (`9001/udp`), gRPC (`9090`)
 
-- HTTP: `8080`
-- TCP: `9000`
-- UDP: `9001/udp`
-- gRPC: `9090`
-
-## B) Run with Docker Compose
+### B) Run with Docker Compose
 
 ```bash
 docker compose up --build
 ```
 
-This starts all services with the same port mapping as local mode.
-
 ---
 
-## 9) Demo Checklist
+## 10) Demo Checklist
 
 1. Register and login via HTTP (`/auth/register`, `/auth/login`)
 2. Call manga APIs (`/manga`, `/manga/:id`)
-3. Use JWT on user APIs (`/users/library`, `/users/progress`)
-4. Connect 2 WebSocket clients to `/ws/chat` and exchange messages
-5. Run gRPC client (`cmd/grpc-client/client.go`) to call all RPC methods
-
----
-
-## 10) TCP Multi-Device Sync Bonus
-
-I added an advanced synchronization feature for the TCP module.
-
-### Features
-- **TCP Device Registration:** Clients must register with a valid JWT and a unique `DeviceID` upon connecting.
-- **Smart Routing:** TCP progress updates are only broadcast to *other* registered devices of the same user, rather than all connected TCP clients.
-- **Spoofing Protection:** The server verifies that incoming `ProgressSyncMessage` matches the registered `UserID` and `DeviceID` to prevent users from spoofing data for other users or devices.
-- **Conflict Resolution:** A basic "last-write-wins" strategy is implemented by tracking the latest progress update timestamp per user and manga. Stale updates return `ignored_stale_update`, while successful ones return `accepted_last_write_wins`.
-- **HTTP Integration:** The `/users/progress` endpoint now forwards an `X-Device-ID` header (defaulting to `http-api`) and the JWT token to the TCP server, making HTTP updates seamlessly trigger TCP syncs to mobile or desktop clients.
+3. Use JWT on user APIs (`/users/library`, `/users/progress`). Notice that progress updates are automatically synced via TCP.
+4. Connect 2 WebSocket clients to `/ws/chat` using `go run ./cmd/ws-client/main.go -token <jwt>` and exchange messages.
+5. Run gRPC client (`cmd/grpc-client/client.go`) to call all RPC methods.
 
 ---
 
@@ -208,5 +181,3 @@ I added an advanced synchronization feature for the TCP module.
 
 The project is implemented in modular phases, starting from core HTTP/auth/database and extending to multi-protocol communication (TCP, UDP, WebSocket, gRPC).  
 This structure supports both course demonstration requirements and further extension.
-
-

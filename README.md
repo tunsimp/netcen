@@ -6,19 +6,12 @@ It combines HTTP REST, TCP, UDP, WebSocket, and gRPC services with a shared SQLi
 ## Features
 
 - HTTP API for auth, manga search/detail, library, and reading progress
-- TCP server for progress synchronization broadcasts
+- TCP server for progress synchronization broadcasts (with advanced multi-device sync)
 - UDP server for lightweight notification broadcasts
 - WebSocket chat for real-time manga discussion
 - gRPC internal service for manga query/update operations
 - SQLite persistence with schema initialization and manga seed data
 - Docker Compose for multi-service local deployment
-
-### Bonus Feature: TCP Multi-Device Sync
-- TCP device registration via JWT + Device ID.
-- TCP progress updates are routed ONLY to other registered devices of the SAME user.
-- Security against spoofed `user_id` / `device_id` across active connections.
-- Conflict resolution using Last-Write-Wins (`accepted_last_write_wins` vs `ignored_stale_update`).
-- HTTP API forwarded `X-Device-ID` integration.
 
 ## Documentation
 
@@ -35,7 +28,8 @@ mangahub/
 │   ├── tcp-server/main.go
 │   ├── udp-server/main.go
 │   ├── grpc-server/main.go
-│   └── grpc-client/client.go
+│   ├── grpc-client/client.go
+│   └── ws-client/main.go
 ├── internal/
 │   ├── auth/
 │   ├── manga/
@@ -86,6 +80,7 @@ docker compose up --build
 ```
 
 This starts:
+
 - `api-server` on `8080`
 - `tcp-server` on `9000`
 - `udp-server` on `9001/udp`
@@ -99,16 +94,20 @@ This starts:
 - Seed data contains 40 manga series across action, shounen, shoujo, seinen, josei, romance, sports, fantasy, and other genres
 
 Environment variables:
+
 - `SQLITE_PATH` (optional)
 - `TCP_SERVER_ADDR` for API to forward progress updates (default `localhost:9000`)
 
-## HTTP API
+---
+
+## 1. HTTP API
 
 Base URL: `http://localhost:8080`
 
 ### Auth
 
 - `POST /auth/register`
+
 ```json
 {
   "username": "alice",
@@ -117,6 +116,7 @@ Base URL: `http://localhost:8080`
 ```
 
 - `POST /auth/login`
+
 ```json
 {
   "username": "alice",
@@ -125,6 +125,7 @@ Base URL: `http://localhost:8080`
 ```
 
 Response:
+
 ```json
 {
   "token": "<jwt>"
@@ -139,11 +140,13 @@ Response:
 ### User Library / Progress (JWT required)
 
 Header:
+
 ```text
 Authorization: Bearer <jwt>
 ```
 
 - `POST /users/library`
+
 ```json
 {
   "manga_id": "one-piece"
@@ -153,6 +156,7 @@ Authorization: Bearer <jwt>
 - `GET /users/library`
 
 - `PUT /users/progress`
+
 ```json
 {
   "manga_id": "one-piece",
@@ -161,15 +165,35 @@ Authorization: Bearer <jwt>
 }
 ```
 
-## WebSocket Chat
+## 2. TCP Synchronization Server
+
+The TCP server listens on port `9000` and features an advanced multi-device sync bonus:
+
+- **TCP Device Registration:** Clients register via JWT + Device ID.
+- **Smart Routing:** TCP progress updates are routed ONLY to other registered devices of the SAME user.
+- **Spoofing Protection:** Security against spoofed `user_id` / `device_id` across active connections.
+- **Conflict Resolution:** Last-Write-Wins strategy (`accepted_last_write_wins` vs `ignored_stale_update`).
+- **HTTP Integration:** The `PUT /users/progress` HTTP API forwards an `X-Device-ID` header directly to the TCP server, allowing API updates to instantly broadcast to TCP clients.
+
+## 3. UDP Notification Server
+
+The UDP server listens on `9001/udp` for lightweight, connectionless notifications.
+
+- **Registration:** Send the raw string `"register"` to subscribe to notifications.
+- **Broadcasting:** Any JSON notification sent to the server is immediately broadcast to all registered UDP clients (excluding the sender).
+
+## 4. WebSocket Chat
 
 Endpoint:
+
 - `ws://localhost:8080/ws/chat`
 
 Required header:
+
 - `Authorization: Bearer <jwt>`
 
 Send message:
+
 ```json
 {
   "message": "Hello everyone"
@@ -177,6 +201,7 @@ Send message:
 ```
 
 Receive broadcast format:
+
 ```json
 {
   "user_id": "user-id",
@@ -186,9 +211,16 @@ Receive broadcast format:
 }
 ```
 
-## gRPC
+### Run ws-client demo
+
+```bash
+go run ./cmd/ws-client/main.go -token <jwt>
+```
+
+## 5. gRPC Internal Service
 
 Service:
+
 - `mangahub.v1.MangaService`
   - `GetManga`
   - `SearchManga`
@@ -203,28 +235,34 @@ go run ./cmd/grpc-client/client.go
 ### grpcurl examples
 
 List services:
+
 ```bash
 grpcurl -plaintext localhost:9090 list
 ```
 
 Get manga:
+
 ```bash
 grpcurl -plaintext -d '{"id":"one-piece"}' localhost:9090 mangahub.v1.MangaService/GetManga
 ```
 
 Search manga:
+
 ```bash
 grpcurl -plaintext -d '{"keyword":"chain"}' localhost:9090 mangahub.v1.MangaService/SearchManga
 ```
 
 Update progress:
+
 ```bash
 grpcurl -plaintext -d '{"user_id":"1","manga_id":"one-piece","current_chapter":5,"status":"reading"}' localhost:9090 mangahub.v1.MangaService/UpdateProgress
 ```
 
+---
+
 ## Manual Demo Flow
 
-Use this flow to demonstrate the five required protocols.
+Use this flow to demonstrate the five required protocols in order.
 
 ### 1. Start services
 
@@ -267,18 +305,21 @@ Invoke-RestMethod -Method Put -Uri http://localhost:8080/users/progress -Headers
 
 The API stores the progress update in SQLite and forwards it to the TCP server.
 
-### 4. gRPC internal service
+### 4. UDP Notification and WebSocket Chat
+
+- **UDP:** Send `register` to `localhost:9001` via UDP to receive broadcasts.
+- **WebSocket:** Connect to chat using the demo client:
+  ```bash
+  go run ./cmd/ws-client/main.go -token <jwt>
+  ```
+
+### 5. gRPC internal service
 
 Run the gRPC client demo:
 
 ```bash
 go run ./cmd/grpc-client
 ```
-
-### 5. WebSocket and UDP
-
-- WebSocket chat is available at `ws://localhost:8080/ws/chat` with `Authorization: Bearer <jwt>`.
-- UDP notification server listens on `9001/udp`; clients register by sending `register`, then receive broadcast notifications.
 
 ## Testing
 
@@ -309,4 +350,3 @@ protoc --go_out=. --go_opt=module=project --go-grpc_out=. --go-grpc_opt=module=p
 - If `grpcurl` is not recognized after install, open a new shell or call full executable path.
 - If API startup fails with database file error, ensure write permission for `data/`.
 - If WebSocket auth fails, verify `Authorization: Bearer <jwt>` header is included.
-
